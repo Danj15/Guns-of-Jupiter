@@ -1,0 +1,11 @@
+{ 
+    
+    "Test_Hull": [
+        
+        {
+            "density": 2, "friction": 0, "bounce": 0, 
+            "filter": { "categoryBits": 1, "maskBits": 65535 },
+            "shape": [   15, 100  ,  0, 85  ,  0, 15  ,  15, 0  ,  25, 0  ,  40, 15  ,  40, 85  ,  25, 100  ]
+        }
+    ]
+}
