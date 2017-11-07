@@ -2,7 +2,10 @@ var Main = function(game){
 
 };
 
+var cursors;
+
 Main.prototype = {
+
 
 	create: function() {
 		var me = this;
@@ -14,7 +17,7 @@ Main.prototype = {
 		me.game.physics.startSystem(Phaser.Physics.P2JS);
 	
 		// Set the gravity
-		me.game.physics.p2.gravity.y = 1000;
+		me.game.physics.p2.gravity.y = 0;
 	
 		// Create a random generator
 		var seed = Date.now();
@@ -22,6 +25,9 @@ Main.prototype = {
 
 		me.createBlock();
 		me.createPlayer();
+
+		cursors = game.input.keyboard.createCursorKeys();
+
 		
 	},
 
@@ -53,6 +59,10 @@ Main.prototype = {
 	
 		// Enable physics, use "true" to enable debug drawing
 		me.game.physics.p2.enable([me.player], false);
+
+		//damping
+		me.player.body.angularDamping = 0.3;
+		me.player.body.damping = 0;
 	
 		// Get rid of current bounding box
 		me.player.body.clearShapes();
@@ -63,6 +73,20 @@ Main.prototype = {
 
 	update: function() {
 
+		if (cursors.up.isDown){
+			this.player.body.thrust(70);
+		} else if (cursors.down.isDown){
+			this.player.body.reverse(40);
+		}
+
+		if (cursors.left.isDown){
+			this.player.body.angularForce = -2;
+		}
+		else if (cursors.right.isDown){
+			this.player.body.angularForce = 2;
+		} else{
+			this.player.angularForce = 0;
+		}
 	},
 
 	gameOver: function(){
