@@ -11,7 +11,7 @@ Main.prototype = {
 		var me = this;
 		
 		// Set the background colour to blue
-		me.game.stage.backgroundColor = '#000';
+		me.game.stage.backgroundColor = '#010103';
 	
 		// Start the P2 Physics Engine
 		me.game.physics.startSystem(Phaser.Physics.P2JS);
@@ -78,15 +78,18 @@ Main.prototype = {
 			this.player.loadTexture("Test_Hull_2_FWD",0,false);
 		} else if (cursors.down.isDown){
 			this.player.body.reverse(40);
+			this.player.loadTexture("Test_Hull_2_BWD",0,false);
 		} else{
 			this.player.loadTexture("Test_Hull_2",0,false);
 		}
 
 		if (cursors.left.isDown){
 			this.player.body.angularForce = -2;
+			this.player.loadTexture("Test_Hull_2_Anticlockwise",0,false);
 		}
 		else if (cursors.right.isDown){
 			this.player.body.angularForce = 2;
+			this.player.loadTexture("Test_Hull_2_Clockwise",0,false);
 		} else{
 			this.player.angularForce = 0;
 		}
