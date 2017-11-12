@@ -38,7 +38,7 @@ Main.prototype = {
 		var blockShape = me.game.add.bitmapData(me.game.world.width, 100);
 	
 		// Fill the block with black color
-		blockShape.ctx.rect(0, 0, me.game.world.width, 100);
+		blockShape.ctx.rect(0, 0, me.game.world.width, 500);
 		blockShape.ctx.fillStyle = '#ccc';
 		blockShape.ctx.fill();
 	
@@ -55,7 +55,7 @@ Main.prototype = {
 		var me = this;
 	
 		// Add the player to the game
-		me.player = me.game.add.sprite(200, 400, 'Test_Hull');
+		me.player = me.game.add.sprite(200, 400, 'Test_Hull_2');
 	
 		// Enable physics, use "true" to enable debug drawing
 		me.game.physics.p2.enable([me.player], false);
@@ -68,15 +68,18 @@ Main.prototype = {
 		me.player.body.clearShapes();
 	
 		// Add our PhysicsEditor bounding shape
-		me.player.body.loadPolygon("Test_Hull_Physics", "Test_Hull");
+		me.player.body.loadPolygon("Test_Hull_2_Physics", "Test_Hull_2");
 	},
 
 	update: function() {
 
 		if (cursors.up.isDown){
 			this.player.body.thrust(70);
+			this.player.loadTexture("Test_Hull_2_FWD",0,false);
 		} else if (cursors.down.isDown){
 			this.player.body.reverse(40);
+		} else{
+			this.player.loadTexture("Test_Hull_2",0,false);
 		}
 
 		if (cursors.left.isDown){
