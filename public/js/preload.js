@@ -9,6 +9,7 @@ Preload.prototype = {
 		this.game.load.image("Test_Hull_2_Clockwise", "Test_Hull_2_Clockwise.png");
 		this.game.load.image("Test_Hull_2_Anticlockwise", "Test_Hull_2_Anticlockwise.png");
 		this.game.load.image("Turret", "Turret.png");
+		this.game.load.image("Bullet", "Bullet.png");
 
 
 		this.game.load.physics("Test_Hull_2_Physics", "Test_Hull_2_Physics.json");

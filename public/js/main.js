@@ -4,6 +4,9 @@ var Main = function(game){
 
 var cursors;
 
+var fireRate = 1000;
+var nextFire = 0;
+
 Main.prototype = {
 
 
@@ -23,11 +26,14 @@ Main.prototype = {
 		var seed = Date.now();
 		me.random = new Phaser.RandomDataGenerator([seed]);
 
-		 //me.createBlock();
+		//me.createBlock();
 		me.createPlayer();
 		me.createTurrets();
 
 		cursors = game.input.keyboard.createCursorKeys();
+		bullets = game.add.group();
+		bullets.setAll('checkWorldBounds', true);
+		bullets.setAll('outOfBoundsKill', true);
 
 		
 	},
@@ -53,7 +59,7 @@ Main.prototype = {
 		me.block = me.game.add.sprite(0, 0, blockShape);
 	
 		// Enable P2 Physics and set the block not to move
-		me.game.physics.p2.enable(me.block);
+		me.game.physics.p2.enable(me.block, true);
 		me.block.body.static = true;
 		me.block.anchor.setTo(0, 0);
 	},
@@ -128,6 +134,23 @@ Main.prototype = {
 		} else{
 			this.player.angularForce = 0;
 		}
+
+		if (game.input.activePointer.isDown)
+		{
+			this.fire(aimAngle);
+		}
+	},
+
+	fire: function(angle){
+		if (game.time.now > nextFire){
+
+			nextFire = game.time.now + fireRate;
+			console.log('BANG');
+			var bullet = game.add.sprite(200,600, 'Bullet');
+			bullets.add(bullet);
+			console.log(bullets);
+		}
+		
 	},
 
 	gameOver: function(){
