@@ -23,12 +23,19 @@ Main.prototype = {
 		var seed = Date.now();
 		me.random = new Phaser.RandomDataGenerator([seed]);
 
-		me.createBlock();
+		 //me.createBlock();
 		me.createPlayer();
+		me.createTurrets();
 
 		cursors = game.input.keyboard.createCursorKeys();
 
 		
+	},
+
+	createTurrets: function() {
+		var me = this;
+		
+	
 	},
 
 	createBlock: function() {
@@ -69,9 +76,37 @@ Main.prototype = {
 	
 		// Add our PhysicsEditor bounding shape
 		me.player.body.loadPolygon("Test_Hull_2_Physics", "Test_Hull_2");
+
+		//add turrets
+		me.turrets = me.game.add.group();
+		me.turret1 = me.game.add.sprite(0, -31, "Turret");
+		me.turret1.anchor.setTo(0.5,0.5);
+		me.turret2 = me.game.add.sprite(0, -13, "Turret");
+		me.turret2.anchor.setTo(0.5,0.5);
+		me.turret3 = me.game.add.sprite(0, 15, "Turret");
+		me.turret3.anchor.setTo(0.5,0.5);
+		me.turret4 = me.game.add.sprite(0, 33, "Turret");
+		me.turret4.anchor.setTo(0.5,0.5);
+		me.player.addChild(me.turret1);
+		me.player.addChild(me.turret2);
+		me.player.addChild(me.turret3);
+		me.player.addChild(me.turret4);
 	},
 
 	update: function() {
+
+		var aimAngle = Math.atan((game.input.mousePointer.y-this.player.y)/(game.input.mousePointer.x-this.player.x));
+		aimAngle = 180*aimAngle/Math.PI + 90 - this.player.angle;
+		if ((game.input.mousePointer.x-this.player.x) < 0){
+			aimAngle += 180;
+		}
+
+
+		this.turret1.angle = aimAngle;
+		this.turret2.angle = aimAngle;
+		this.turret3.angle = aimAngle;
+		this.turret4.angle = aimAngle;
+		
 
 		if (cursors.up.isDown){
 			this.player.body.thrust(70);
