@@ -4,7 +4,9 @@ var Main = function(game){
 
 var cursors;
 
-var fireRate = 1000;
+var gunOffsets = [-31,-13,15,33];
+
+var fireRate = 500;
 var nextFire = 0;
 
 Main.prototype = {
@@ -25,6 +27,12 @@ Main.prototype = {
 		// Create a random generator
 		var seed = Date.now();
 		me.random = new Phaser.RandomDataGenerator([seed]);
+
+		me.playerCollisionGroup = game.physics.p2.createCollisionGroup();
+		me.bulletCollisionGroup = game.physics.p2.createCollisionGroup();
+		game.physics.p2.updateBoundsCollisionGroup();
+		
+
 
 		//me.createBlock();
 		me.createPlayer();
@@ -83,15 +91,19 @@ Main.prototype = {
 		// Add our PhysicsEditor bounding shape
 		me.player.body.loadPolygon("Test_Hull_2_Physics", "Test_Hull_2");
 
+		me.player.body.setCollisionGroup(me.playerCollisionGroup);
+
+		
+
 		//add turrets
 		me.turrets = me.game.add.group();
-		me.turret1 = me.game.add.sprite(0, -31, "Turret");
+		me.turret1 = me.game.add.sprite(0, gunOffsets[0], "Turret");
 		me.turret1.anchor.setTo(0.5,0.5);
-		me.turret2 = me.game.add.sprite(0, -13, "Turret");
+		me.turret2 = me.game.add.sprite(0, gunOffsets[1], "Turret");
 		me.turret2.anchor.setTo(0.5,0.5);
-		me.turret3 = me.game.add.sprite(0, 15, "Turret");
+		me.turret3 = me.game.add.sprite(0, gunOffsets[2], "Turret");
 		me.turret3.anchor.setTo(0.5,0.5);
-		me.turret4 = me.game.add.sprite(0, 33, "Turret");
+		me.turret4 = me.game.add.sprite(0, gunOffsets[3], "Turret");
 		me.turret4.anchor.setTo(0.5,0.5);
 		me.player.addChild(me.turret1);
 		me.player.addChild(me.turret2);
@@ -137,20 +149,48 @@ Main.prototype = {
 
 		if (game.input.activePointer.isDown)
 		{
-			this.fire(aimAngle);
+			this.fire(aimAngle + this.player.angle);
 		}
+
 	},
 
 	fire: function(angle){
 		if (game.time.now > nextFire){
-
 			nextFire = game.time.now + fireRate;
 			console.log('BANG');
-			var bullet = game.add.sprite(200,600, 'Bullet');
-			bullets.add(bullet);
-			console.log(bullets);
+			console.log('player x: '+this.player.body.x);
+			console.log('player y: '+this.player.body.y);
+			console.log('fire angle: '+angle);
+			for(i=0;i<4;i++){
+				this.fireGunNumber(i, angle);
+			}
+			
 		}
 		
+	},
+
+	fireGunNumber: function(gunNumber, angle){
+		var fireAngle = angle - this.player.angle;
+		if (fireAngle < 0){
+			fireAngle += 360;
+		} else if (fireAngle > 360){
+			fireAngle -= 360;
+		}
+		console.log(fireAngle);
+		var cantFire = ((fireAngle < 30 || fireAngle > 330) && (gunNumber != 0)) || ((fireAngle > 150 && fireAngle < 210) && (gunNumber != 3));
+		if (!cantFire){
+			var xPosition = this.player.body.x + 10*Math.sin(angle*Math.PI/180) - gunOffsets[gunNumber]*Math.sin(this.player.angle*Math.PI/180);
+			var yPosition = this.player.body.y - 10*Math.cos(angle*Math.PI/180) + gunOffsets[gunNumber]*Math.cos(this.player.angle*Math.PI/180);
+			var bullet = game.add.sprite(xPosition,yPosition, 'Bullet');
+			this.game.physics.p2.enable([bullet], false);
+			bullet.body.setCollisionGroup(this.bulletCollisionGroup);
+			bullet.body.angle = angle;
+			bullet.body.thrust(20000); 
+			bullet.body.damping = 0;
+			bullet.lifespan = 5000;
+			bullets.add(bullet);
+		}
+
 	},
 
 	gameOver: function(){
