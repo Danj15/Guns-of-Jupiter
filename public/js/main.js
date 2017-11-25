@@ -4,7 +4,11 @@ var Main = function(game){
 
 var cursors;
 
-var gunOffsets = [-31,-13,15,33];
+var debug = false;
+
+
+
+var gunOffsets = [-32,-14,14,32];
 
 var fireRate = 500;
 var nextFire = 0;
@@ -14,6 +18,13 @@ Main.prototype = {
 
 	create: function() {
 		var me = this;
+
+		this.wasd = {
+			up: this.game.input.keyboard.addKey(Phaser.Keyboard.W),
+			down: this.game.input.keyboard.addKey(Phaser.Keyboard.S),
+			left: this.game.input.keyboard.addKey(Phaser.Keyboard.A),
+			right: this.game.input.keyboard.addKey(Phaser.Keyboard.D),
+		  };
 		
 		// Set the background colour to blue
 		me.game.stage.backgroundColor = '#010103';
@@ -30,11 +41,12 @@ Main.prototype = {
 
 		me.playerCollisionGroup = game.physics.p2.createCollisionGroup();
 		me.bulletCollisionGroup = game.physics.p2.createCollisionGroup();
+		me.enemyCollisionGroup = game.physics.p2.createCollisionGroup();
 		game.physics.p2.updateBoundsCollisionGroup();
 		
 
 
-		//me.createBlock();
+		me.createEnemy();
 		me.createPlayer();
 		me.createTurrets();
 
@@ -52,24 +64,28 @@ Main.prototype = {
 	
 	},
 
-	createBlock: function() {
+	createEnemy: function() {
 		var me = this;
+
+		me.enemy = me.game.add.sprite(600, 400, 'Test_Hull_2');
 	
-		// Define a block using bitmap data rather than an image sprite
-		var blockShape = me.game.add.bitmapData(me.game.world.width, 100);
-	
-		// Fill the block with black color
-		blockShape.ctx.rect(0, 0, me.game.world.width, 500);
-		blockShape.ctx.fillStyle = '#ccc';
-		blockShape.ctx.fill();
-	
-		// Create a new sprite using the bitmap data
-		me.block = me.game.add.sprite(0, 0, blockShape);
-	
-		// Enable P2 Physics and set the block not to move
-		me.game.physics.p2.enable(me.block, true);
-		me.block.body.static = true;
-		me.block.anchor.setTo(0, 0);
+		// Enable P2 Physics
+		me.game.physics.p2.enable(me.enemy, debug);
+
+		//damping
+		me.enemy.body.angularDamping = 0.3;
+		me.enemy.body.damping = 0.1;
+
+		// Get rid of current bounding box
+		me.enemy.body.clearShapes();
+		
+		// Add our PhysicsEditor bounding shape
+		me.enemy.body.loadPolygon("Test_Hull_2_Physics", "Test_Hull_2");
+
+		me.enemy.body.setCollisionGroup(me.enemyCollisionGroup);
+
+		me.enemy.body.collides([me.playerCollisionGroup, me.bulletCollisionGroup]);
+		
 	},
 
 	createPlayer: function() {
@@ -79,11 +95,11 @@ Main.prototype = {
 		me.player = me.game.add.sprite(200, 400, 'Test_Hull_2');
 	
 		// Enable physics, use "true" to enable debug drawing
-		me.game.physics.p2.enable([me.player], false);
+		me.game.physics.p2.enable([me.player], debug);
 
 		//damping
 		me.player.body.angularDamping = 0.3;
-		me.player.body.damping = 0;
+		me.player.body.damping = 0.1;
 	
 		// Get rid of current bounding box
 		me.player.body.clearShapes();
@@ -92,6 +108,7 @@ Main.prototype = {
 		me.player.body.loadPolygon("Test_Hull_2_Physics", "Test_Hull_2");
 
 		me.player.body.setCollisionGroup(me.playerCollisionGroup);
+		me.player.body.collides([me.playerCollisionGroup, me.enemyCollisionGroup]);
 
 		
 
@@ -126,21 +143,21 @@ Main.prototype = {
 		this.turret4.angle = aimAngle;
 		
 
-		if (cursors.up.isDown){
+		if (cursors.up.isDown || this.wasd.up.isDown){
 			this.player.body.thrust(70);
 			this.player.loadTexture("Test_Hull_2_FWD",0,false);
-		} else if (cursors.down.isDown){
+		} else if (cursors.down.isDown || this.wasd.down.isDown){
 			this.player.body.reverse(40);
 			this.player.loadTexture("Test_Hull_2_BWD",0,false);
 		} else{
 			this.player.loadTexture("Test_Hull_2",0,false);
 		}
 
-		if (cursors.left.isDown){
+		if (cursors.left.isDown || this.wasd.left.isDown){
 			this.player.body.angularForce = -2;
 			this.player.loadTexture("Test_Hull_2_Anticlockwise",0,false);
 		}
-		else if (cursors.right.isDown){
+		else if (cursors.right.isDown || this.wasd.right.isDown){
 			this.player.body.angularForce = 2;
 			this.player.loadTexture("Test_Hull_2_Clockwise",0,false);
 		} else{
@@ -165,6 +182,7 @@ Main.prototype = {
 				this.fireGunNumber(i, angle);
 			}
 			
+			
 		}
 		
 	},
@@ -176,7 +194,6 @@ Main.prototype = {
 		} else if (fireAngle > 360){
 			fireAngle -= 360;
 		}
-		console.log(fireAngle);
 		var cantFire = ((fireAngle < 30 || fireAngle > 330) && (gunNumber != 0)) || ((fireAngle > 150 && fireAngle < 210) && (gunNumber != 3));
 		if (!cantFire){
 			var xPosition = this.player.body.x + 10*Math.sin(angle*Math.PI/180) - gunOffsets[gunNumber]*Math.sin(this.player.angle*Math.PI/180);
@@ -184,11 +201,18 @@ Main.prototype = {
 			var bullet = game.add.sprite(xPosition,yPosition, 'Bullet');
 			this.game.physics.p2.enable([bullet], false);
 			bullet.body.setCollisionGroup(this.bulletCollisionGroup);
+			bullet.body.collides([this.bulletCollisionGroup, this.enemyCollisionGroup]);
 			bullet.body.angle = angle;
 			bullet.body.thrust(20000); 
 			bullet.body.damping = 0;
 			bullet.lifespan = 5000;
 			bullets.add(bullet);
+
+			//recoil
+			console.log(this.player.body.x);
+			console.log(this.player.body.y);
+			var force = [10*Math.sin(angle*Math.PI/180), -10*Math.cos(angle*Math.PI/180)];
+			this.player.body.applyForce(force, 0, gunOffsets[gunNumber]);
 		}
 
 	},
