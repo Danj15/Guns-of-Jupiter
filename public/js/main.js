@@ -39,12 +39,17 @@ Main.prototype = {
 		var seed = Date.now();
 		me.random = new Phaser.RandomDataGenerator([seed]);
 
+		me.game.physics.p2.setImpactEvents(true);
+
 		me.playerCollisionGroup = game.physics.p2.createCollisionGroup();
 		me.bulletCollisionGroup = game.physics.p2.createCollisionGroup();
 		me.enemyCollisionGroup = game.physics.p2.createCollisionGroup();
 		game.physics.p2.updateBoundsCollisionGroup();
 		
+		explosionSound = this.game.add.audio('boom');
+		fireSound = this.game.add.audio('gunFire');
 
+		game.world.setBounds(0, 0, 2000, 2000);
 
 		me.createEnemy();
 		me.createPlayer();
@@ -52,8 +57,20 @@ Main.prototype = {
 
 		cursors = game.input.keyboard.createCursorKeys();
 		bullets = game.add.group();
-		bullets.setAll('checkWorldBounds', true);
+		bullets.setAll('checkWorldBounds', false);
 		bullets.setAll('outOfBoundsKill', true);
+
+		game.camera.follow(me.player);
+
+		var graphics = game.add.graphics(0, 0);
+
+		graphics.lineStyle(8, 0xffffff, 0.1);
+		graphics.arc(1000, 1000, 1000, 0, game.math.degToRad(360), false);
+		graphics.lineStyle(4, 0xffffff, 0.1);
+		graphics.arc(1000, 1000, 800, 0, game.math.degToRad(360), false);
+
+
+
 
 		
 	},
@@ -67,7 +84,7 @@ Main.prototype = {
 	createEnemy: function() {
 		var me = this;
 
-		me.enemy = me.game.add.sprite(600, 400, 'Test_Hull_2');
+		me.enemy = me.game.add.sprite(1200, 1000, 'Test_Hull_2');
 	
 		// Enable P2 Physics
 		me.game.physics.p2.enable(me.enemy, debug);
@@ -92,7 +109,7 @@ Main.prototype = {
 		var me = this;
 	
 		// Add the player to the game
-		me.player = me.game.add.sprite(200, 400, 'Test_Hull_2');
+		me.player = me.game.add.sprite(800, 1000, 'Test_Hull_2');
 	
 		// Enable physics, use "true" to enable debug drawing
 		me.game.physics.p2.enable([me.player], debug);
@@ -129,10 +146,9 @@ Main.prototype = {
 	},
 
 	update: function() {
-
-		var aimAngle = Math.atan((game.input.mousePointer.y-this.player.y)/(game.input.mousePointer.x-this.player.x));
+		var aimAngle = Math.atan((game.input.mousePointer.y -this.player.y + game.camera.y)/(game.input.mousePointer.x -this.player.x + game.camera.x));
 		aimAngle = 180*aimAngle/Math.PI + 90 - this.player.angle;
-		if ((game.input.mousePointer.x-this.player.x) < 0){
+		if ((game.input.mousePointer.x-this.player.x + game.camera.x) < 0){
 			aimAngle += 180;
 		}
 
@@ -169,18 +185,51 @@ Main.prototype = {
 			this.fire(aimAngle + this.player.angle);
 		}
 
+		this.pushBackIn(this.player);
+
+		this.pushBackIn(this.enemy);
+
+	},
+
+	pushBackIn: function(leaver){
+		if(this.game.math.distance(1000,1000, leaver.body.x,leaver.body.y) > 800){
+			var pushAngle = this.game.math.angleBetween(1000,1000, leaver.body.x,leaver.body.y);
+
+			//TODO: find component of velocity of ship in direction of push angle
+
+			var playerVelocityAngle =  Math.atan(leaver.body.velocity.y/leaver.body.velocity.x);
+
+			if(leaver.body.velocity.x < 0 && leaver.body.velocity.y >0){
+				playerVelocityAngle += Math.PI;
+			}else if(leaver.body.velocity.x < 0 && leaver.body.velocity.y <0){
+				playerVelocityAngle -= Math.PI;
+			}
+	
+			if(Math.abs(playerVelocityAngle-pushAngle) < Math.PI/2 || this.game.math.distance(1000,1000, leaver.body.x,leaver.body.y) > 950){
+				var force = [20*Math.cos(pushAngle), 20*Math.sin(pushAngle)];
+				leaver.body.applyForce(force, 0, 0);
+			} 
+
+			
+
+		}
+	},
+
+	render: function() {
+		if(debug){
+			game.debug.cameraInfo(game.camera, 32, 32);	
+			game.debug.spriteCoords(this.player, 32, 120);
+		}		
+				
 	},
 
 	fire: function(angle){
 		if (game.time.now > nextFire){
 			nextFire = game.time.now + fireRate;
-			console.log('BANG');
-			console.log('player x: '+this.player.body.x);
-			console.log('player y: '+this.player.body.y);
-			console.log('fire angle: '+angle);
 			for(i=0;i<4;i++){
 				this.fireGunNumber(i, angle);
 			}
+			fireSound.play('',0,0.3);
 			
 			
 		}
@@ -201,20 +250,26 @@ Main.prototype = {
 			var bullet = game.add.sprite(xPosition,yPosition, 'Bullet');
 			this.game.physics.p2.enable([bullet], false);
 			bullet.body.setCollisionGroup(this.bulletCollisionGroup);
-			bullet.body.collides([this.bulletCollisionGroup, this.enemyCollisionGroup]);
+			bullet.body.collides([this.bulletCollisionGroup, this.enemyCollisionGroup], this.impact, this);
 			bullet.body.angle = angle;
-			bullet.body.thrust(20000); 
+			bullet.body.mass = 0.01;
+			bullet.body.thrust(200); 
 			bullet.body.damping = 0;
 			bullet.lifespan = 5000;
 			bullets.add(bullet);
 
 			//recoil
-			console.log(this.player.body.x);
-			console.log(this.player.body.y);
 			var force = [10*Math.sin(angle*Math.PI/180), -10*Math.cos(angle*Math.PI/180)];
 			this.player.body.applyForce(force, 0, gunOffsets[gunNumber]);
 		}
 
+	},
+
+	impact: function(bullet,target){
+		var explosion = this.game.add.sprite(bullet.x,bullet.y,'Boom');
+		explosionSound.play('',0,0.8);
+		explosion.lifespan = 100;
+		bullet.sprite.kill();
 	},
 
 	gameOver: function(){
