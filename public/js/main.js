@@ -185,6 +185,8 @@ Main.prototype = {
 			this.fire(aimAngle + this.player.angle);
 		}
 
+		this.constrainVelocity(this.player, 5);
+
 		this.pushBackIn(this.player);
 
 		this.pushBackIn(this.enemy);
@@ -274,6 +276,22 @@ Main.prototype = {
 
 	gameOver: function(){
 		this.game.state.start('GameOver');
+	},
+
+	constrainVelocity: function(sprite, maxVelocity) {
+		var body = sprite.body
+		var angle, currVelocitySqr, vx, vy;
+		vx = body.data.velocity[0];
+		vy = body.data.velocity[1];
+		currVelocitySqr = vx * vx + vy * vy;
+		if (currVelocitySqr > maxVelocity * maxVelocity) {
+			angle = Math.atan2(vy, vx);
+			vx = Math.cos(angle) * maxVelocity;
+			vy = Math.sin(angle) * maxVelocity;
+			body.data.velocity[0] = vx;
+			body.data.velocity[1] = vy;
+			console.log('limited speed to: ' + maxVelocity);
+		}
 	}
 
 };
