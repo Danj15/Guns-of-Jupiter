@@ -44,6 +44,7 @@ Main.prototype = {
 		me.playerCollisionGroup = game.physics.p2.createCollisionGroup();
 		me.bulletCollisionGroup = game.physics.p2.createCollisionGroup();
 		me.enemyCollisionGroup = game.physics.p2.createCollisionGroup();
+		me.asteroidCollisionGroup = game.physics.p2.createCollisionGroup();
 		game.physics.p2.updateBoundsCollisionGroup();
 		
 		explosionSound = this.game.add.audio('boom');
@@ -53,7 +54,7 @@ Main.prototype = {
 
 		me.createEnemy();
 		me.createPlayer();
-		me.createTurrets();
+		me.createAsteroid();
 
 		cursors = game.input.keyboard.createCursorKeys();
 		bullets = game.add.group();
@@ -75,8 +76,16 @@ Main.prototype = {
 		
 	},
 
-	createTurrets: function() {
+	createAsteroid: function() {
 		var me = this;
+		me.asteroid = me.game.add.sprite(1000, 800, 'Asteroid');
+		me.game.physics.p2.enable(me.asteroid, debug);
+		me.asteroid.body.angularDamping = 0;
+		me.asteroid.body.damping = 0;
+
+		me.asteroid.body.setCollisionGroup(me.asteroidCollisionGroup);
+		
+		me.asteroid.body.collides([me.playerCollisionGroup, me.bulletCollisionGroup, me.enemyCollisionGroup]);
 		
 	
 	},
@@ -101,7 +110,7 @@ Main.prototype = {
 
 		me.enemy.body.setCollisionGroup(me.enemyCollisionGroup);
 
-		me.enemy.body.collides([me.playerCollisionGroup, me.bulletCollisionGroup]);
+		me.enemy.body.collides([me.playerCollisionGroup, me.bulletCollisionGroup,me.asteroidCollisionGroup]);
 		
 	},
 
@@ -125,7 +134,7 @@ Main.prototype = {
 		me.player.body.loadPolygon("Test_Hull_2_Physics", "Test_Hull_2");
 
 		me.player.body.setCollisionGroup(me.playerCollisionGroup);
-		me.player.body.collides([me.playerCollisionGroup, me.enemyCollisionGroup]);
+		me.player.body.collides([me.playerCollisionGroup, me.enemyCollisionGroup,me.asteroidCollisionGroup]);
 
 		
 
@@ -208,9 +217,12 @@ Main.prototype = {
 			}
 	
 			if(Math.abs(playerVelocityAngle-pushAngle) < Math.PI/2 || this.game.math.distance(1000,1000, leaver.body.x,leaver.body.y) > 950){
-				var force = [20*Math.cos(pushAngle), 20*Math.sin(pushAngle)];
+				var force = [10*Math.cos(pushAngle), 10*Math.sin(pushAngle)];
 				leaver.body.applyForce(force, 0, 0);
-			} 
+			} else{
+				var force = [2*Math.cos(pushAngle), 2*Math.sin(pushAngle)];
+				leaver.body.applyForce(force, 0, 0);
+			}
 
 			
 
@@ -252,7 +264,7 @@ Main.prototype = {
 			var bullet = game.add.sprite(xPosition,yPosition, 'Bullet');
 			this.game.physics.p2.enable([bullet], false);
 			bullet.body.setCollisionGroup(this.bulletCollisionGroup);
-			bullet.body.collides([this.bulletCollisionGroup, this.enemyCollisionGroup], this.impact, this);
+			bullet.body.collides([this.bulletCollisionGroup, this.enemyCollisionGroup,this.asteroidCollisionGroup], this.impact, this);
 			bullet.body.angle = angle;
 			bullet.body.mass = 0.01;
 			bullet.body.thrust(200); 
@@ -290,7 +302,6 @@ Main.prototype = {
 			vy = Math.sin(angle) * maxVelocity;
 			body.data.velocity[0] = vx;
 			body.data.velocity[1] = vy;
-			console.log('limited speed to: ' + maxVelocity);
 		}
 	}
 
