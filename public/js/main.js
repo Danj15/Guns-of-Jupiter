@@ -10,7 +10,7 @@ var debug = false;
 
 var gunOffsets = [-32,-14,14,32];
 
-var fireRate = 500;
+var fireRate = 1000;
 var nextFire = 0;
 
 Main.prototype = {
@@ -82,6 +82,10 @@ Main.prototype = {
 		me.game.physics.p2.enable(me.asteroid, debug);
 		me.asteroid.body.angularDamping = 0;
 		me.asteroid.body.damping = 0;
+
+		me.asteroid.body.clearShapes();
+
+		me.asteroid.body.loadPolygon("Asteroid_Physics", "Asteroid");
 
 		me.asteroid.body.setCollisionGroup(me.asteroidCollisionGroup);
 		

@@ -1,0 +1,9 @@
+{
+	"Asteroid": [
+		{
+			"dencity": 2, "friction": 0, "bounce": 0,
+			"filters": {"categoryBits": 1, "maskBits": 655535},
+			"shape": [ 1,15 , 7,6 , 24,1 , 31,5 , 38,14 , 45,30 , 43,43 , 34,49 , 19,48 , 8,37 , 2,26 ]
+		}
+	]
+}

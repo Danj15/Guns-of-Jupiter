@@ -18,6 +18,7 @@ Preload.prototype = {
 
 
 		this.game.load.physics("Test_Hull_2_Physics", "Test_Hull_2_Physics.json");
+		this.game.load.physics("Asteroid_Physics", "Asteroid_Physics.json");
 	},
 
 	create: function(){
